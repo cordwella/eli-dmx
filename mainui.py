@@ -1,11 +1,18 @@
-from flask import Flask, request, session, redirect, url_for, \
-    abort, render_template, flash, send_from_directory
+from flask import request, session, redirect, url_for, \
+    render_template, flash, Blueprint
 import MySQLdb
 
-app = Flask(__name__)
-app.config.from_pyfile('application.cfg', silent=True)
+mainui = Blueprint('mainui', __name__)
+mainui.config = {}
 
-@app.route('/')
+## Overide to allow access to configuration values
+@mainui.record
+def record_params(setup_state):
+  app = setup_state.app
+  mainui.config = dict([(key,value) for (key,value) in app.config.iteritems()])
+
+# Pages
+@mainui.route('/')
 def index():
     channels = query_db("SELECT * FROM channel_with_category")
     scenes = query_db("SELECT * FROM scene_with_category")
@@ -13,12 +20,17 @@ def index():
 
     return render_template('index.html', channels=channels, scenes=scenes, stacks=stacks)
 
+## when editing scenes, stacks etc, delete all of them in the db and then re add them
+# as defined in ui
+# this is not the most efficent solution however given time constraints
+# im tired
+
 # Database shisazt
 def connect_db():
-    return MySQLdb.connect(host=app.config['DB_HOST'],    # your host, usually localhost
-                         user=app.config['DB_USER'],         # your username
-                         passwd=app.config['DB_PASS'],  # your password
-                         db=app.config['DB_NAME'])        # name of the data base
+    return MySQLdb.connect(host=mainui.config['DB_HOST'],    # your host, usually localhost
+                         user=mainui.config['DB_USER'],         # your username
+                         passwd=mainui.config['DB_PASS'],  # your password
+                         db=mainui.config['DB_NAME'])        # name of the data base
 
 def query_db(query, values=0):
     """ Query DB & commit """
@@ -32,7 +44,3 @@ def query_db(query, values=0):
     db.commit()
     db.close()
     return output
-
-
-if __name__ == '__main__':
-    app.run()
