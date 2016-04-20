@@ -40,8 +40,15 @@ def changeChannel(chanid, value, fadetime=0):
 @api.route('/scene/<int:sceneid>/value/<int:value>')
 @api.route('/scene/<int:sceneid>/value/<int:value>/fade/<int:fadetime>')
 def changeScene(sceneid, value, fadetime=0):
+    allChannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = %s", [sceneid])
+    data = []
+    data.extend([None] * (CHANNELS - len(data)))
 
-    return "nope"
+    for row in allChannels:
+        data[row["cnumber"]-1] = int(row["percent"] * value /100)
+
+    startScene(data, fadetime=fadetime)
+    return str(data)
 
 @api.route('/stack/<int:sceneid>/value/<int:value>')
 @api.route('/stack/<int:sceneid>/value/<int:value>/fade/<int:fadetime>')
@@ -73,7 +80,7 @@ def query_db(query, values=0):
 
 # Functions and variables about actually sending data to olad
 
-TICK_INTERVAL = 1000 #send data ever x ms
+TICK_INTERVAL = 100 #send data ever x ms
 UNIVERSE = 1 # DMX universe
 
 currentLightValues = [] #set of values to send
