@@ -1,0 +1,26 @@
+body{
+    margin: 15px;
+    margin-top: 60px;
+}
+
+ul.slider-set{
+    list-style: none;
+}
+ul.slider-set li{
+    list-style: none;
+    display: block;
+}
+
+ul.slider-set li h4{
+    display: block;
+    float: left;
+}
+
+.chanid{
+    float: right;
+}
+
+.edit-link{
+    float: right;
+    margin-left: 5px;
+}

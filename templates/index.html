@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block body %}
+<section id="channels" class="col-xl-4 col-md-6 col-sm-12">
+    <h2> Channels </h2>
+    <ul class="slider-set list-group">
+        {% for channel in channels %}
+            <li class="list-group-item">
+                <h4>{{ channel.cname }}
+                    {% if channel.category %}
+                        <span class="category label label-primary">{{ channel.category }}</span>
+                    {% endif %}
+                </h4>
+                <span class="edit-link label label-primary chanid">Edit</span>
+                <span class="chanid label label-info"> {{ channel.cnumber }} </span>
+                <input id="chan-{{channel.cid}}" type="range" value="0" min="0" max="255">
+            </li>
+        {% else %}
+          <li><em>No channels.</em>
+        {% endfor %}
+    </ul>
+</section>
+
+<section id="scenes" class="col-xl-4 col-md-6 col-sm-12">
+    <h2> Scenes </h2>
+
+    <ul class="slider-set list-group">
+        {% for scene in scenes %}
+            <li class=list-group-item>
+                <h4>{{ scene.sname }}
+                    {% if scene.category %}
+                        <span class="category label label-primary">{{ scene.category }}</span>
+                    {% endif %}
+                </h4>
+                <span class="edit-link label label-primary chanid">Edit</span>
+                <input id="scene-{{scene.sid}}" type="range" value="0" min="0" max="255">
+            </li>
+        {% else %}
+          <li><em>No scenes so far.</em>
+        {% endfor %}
+    </ul>
+
+</section>
+
+<section id="stacks" class="col-xl-4 col-md-6 col-sm-12">
+    <h2> Stacks </h2>
+    <ul class="slider-set list-group">
+        {% for stack in stacks %}
+            <li class=list-group-item>
+                <h4>{{ stack.stname }}
+                    {% if stack.category %}
+                        <span class="category label label-primary">{{ stack.category }}</span>
+                    {% endif %}
+                </h4>
+                <span class="edit-link label label-primary chanid">Edit</span>
+                <input id="stack-{{stack.stid}}" type="range" value="0" min="0" max="255">
+            </li>
+        {% else %}
+          <li><em>No stacks so far.</em>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}
