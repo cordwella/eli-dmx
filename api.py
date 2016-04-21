@@ -87,7 +87,7 @@ currentLightValues = [] #set of values to send
 currentLightTimecodes = [] # which thread controls what
 
 # Pad arrays (to stop errors from occuring)
-currentLightValues.extend([0] * (CHANNELS - len(currentLightValues)))
+currentLightValues.extend([float(0)] * (CHANNELS - len(currentLightValues)))
 currentLightTimecodes.extend([0] * (CHANNELS - len(currentLightTimecodes)))
 
 oldLightValues = [] # to check that we aren't sending the same list each time
@@ -101,7 +101,7 @@ def startScene(endstate, fadetime=0, timestamp=None):
     toChange = 0
     changeAmount = [] #amount to change by each frame
 
-    tickgoal = int(fadetime/TICK_INTERVAL)
+    tickgoal = int(fadetime/TICK_INTERVAL + 0.5)
     if tickgoal < 1:
         tickgoal = 1
 
@@ -122,9 +122,9 @@ def startScene(endstate, fadetime=0, timestamp=None):
             #changeAmount.append(light)
             currentLightValue = currentLightValues[i]
             if fadetime == 0:
-                changeAmount.append(light - currentLightValue)
+                changeAmount.append(float(light - currentLightValue))
             else:
-                changeAmount.append((light - currentLightValue)/tickgoal)
+                changeAmount.append(float((light - currentLightValue)/tickgoal))
 
             if currentLightTimecodes[i] < timestamp:
                 currentLightTimecodes[i] = timestamp
@@ -139,30 +139,29 @@ def sendFrame(tickgoal, diff, timestamp):
 
     for i in range(len(currentLightValues)):
         if currentLightTimecodes[i] == timestamp:
-            currentLightValues[i] = currentLightValues[i] + diff[i]
+            currentLightValues[i] = float(currentLightValues[i] + diff[i])
 
     # if we have gone through this as many times as we need to don't do it again
     # otherwise do do it again
     tickgoal = tickgoal - 1
     if tickgoal >= 1:
-        threading.Timer(TICK_INTERVAL/1000, sendFrame, [tickgoal, diff, timestamp]).start()
+        #threading.Timer(TICK_INTERVAL/1000, sendFrame, [tickgoal, diff, timestamp]).start()
+        # this here will only work if you multiply, and will fail if you divide, why WHO KNOWS
+        wait = TICK_INTERVAL * 0.001
+        threading.Timer(wait , sendFrame, [tickgoal, diff, timestamp]).start()
 
 def sendData():
     if sendingActive:
-        threading.Timer(TICK_INTERVAL/1000, sendData).start()
+        threading.Timer((TICK_INTERVAL * 0.001), sendData).start()
         # So the old version of this used the annoying ola wrapper
         # but due to issues with threading that would not work in this version
         # so I'm using their JSON api
-        d = ','.join(str(x) for x in currentLightValues)
-        print(d)
+        d = ','.join(str(int(x+0.5)) for x in currentLightValues)
+        print(str(currentLightValues))
         requests.post('http://127.0.0.1:9090/set_dmx', data = {'u':'1', 'd':d})
     else:
         print "Sending Finished"
 
-def DmxSent(True):
-    if not sendingActive:
-        #wrapper.Stop()
-        print("death")
 
 def restartSending():
     global sendingActive
