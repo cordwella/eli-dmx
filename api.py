@@ -10,8 +10,24 @@ api = Blueprint('api', __name__)
 api.config = {}
 
 CHANNELS = 24 #will make this dynamic when intergrating DB
+TICK_INTERVAL = 100 #send data ever x ms
+UNIVERSE = 1 # DMX universe
+bpm = 60
+sendingActive = False
+currentStacks = {}
+
+currentLightValues = [] #set of values to send
+currentLightTimecodes = [] # which thread controls what
+
+# Pad arrays (to stop errors from occuring)
+currentLightValues.extend([float(0)] * (CHANNELS - len(currentLightValues)))
+currentLightTimecodes.extend([0] * (CHANNELS - len(currentLightTimecodes)))
+
+oldLightValues = [] # to check that we aren't sending the same list each time
 
 sendingActive = False
+
+globalFadetime = 0 #note this currently only applies to stacks
 
 @api.record
 def record_params(setup_state):
@@ -22,6 +38,7 @@ def record_params(setup_state):
 def index():
     #should return general data about scenenames categories etc
     # as a json format
+    # also the current global fade time and the state of the chases
     return "Test"
 
 @api.route('/channel/<int:chanid>/value/<int:value>')
@@ -50,12 +67,57 @@ def changeScene(sceneid, value, fadetime=0):
     startScene(data, fadetime=fadetime)
     return str(data)
 
-@api.route('/stack/<int:sceneid>/value/<int:value>')
-@api.route('/stack/<int:sceneid>/value/<int:value>/fade/<int:fadetime>')
-def changeStack(stack, value, fadetime=0):
+@api.route('/stack/<int:stackid>/value/<int:value>')
+@api.route('/stack/<int:stackid>/value/<int:value>/fade/<int:fadetime>')
+def changeStack(stackid, value, fadetime=0):
+    stack = query_db("SELECT * FROM stack_scenes_order WHERE stackid = %s", [stackid])
+    global globalFadetime
+    globalFadetime = fadetime
 
-    return "nope"
+    stackdata = []
+    timestamp = time.time()
+    applicLights = []
 
+    for row in stack:
+        # note we don't need to keep track of
+        sceneid = row["sceneid"]
+        allChannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = %s", [sceneid])
+        sceneData =dict()
+        sceneData['beats'] = row["beats"]
+        data = []
+        data.extend([None] * (CHANNELS - len(data)))
+
+        for channelRow in allChannels:
+            data[channelRow["cnumber"]-1] = int(float(channelRow["percent"]) * float(row["percent"]) * value * 0.0001)
+            applicLights.append(channelRow["cnumber"]-1)
+            currentLightTimecodes[channelRow["cnumber"]] = timestamp
+
+        sceneData['channels'] = data
+
+        stackdata.append(sceneData)
+
+    try:
+        currentpos = currentStacks[stackid]["position"]
+        currentbeat = currentStacks[stackid]["beat"]
+    except:
+        currentpos = 0
+        currentbeat = 0
+        currentStacks[stackid] = {"position":0, "beat":0}
+
+    doStack(stackdata, stackid, timestamp, applicLights, currentpos=currentpos, currentbeat=currentbeat)
+    return str(stackdata) + str(applicLights)
+
+@api.route('/fade/<int:fadetime>')
+def changeFadetime(fadetime):
+    global globalFadetime
+    globalFadetime = fadetime
+    return "Fadetime = " + str(globalFadetime)
+
+@api.route('/bpm/<int:beats>')
+def changeBPM(beats):
+    global bpm
+    bpm = beats
+    return "Bpm = " + str(bpm)
 
 # Database shisazt
 def connect_db():
@@ -78,21 +140,56 @@ def query_db(query, values=0):
     return output
 
 
-# Functions and variables about actually sending data to olad
+def doStack(stackdata, stackid, timestamp, applicablelights, currentpos=0, currentbeat=0):
+    # TODO: all of this crap
+    stillActive = False
+    for i in applicablelights:
+        if currentLightTimecodes[i] <= timestamp:
+            stillActive = True
+            continue
 
-TICK_INTERVAL = 100 #send data ever x ms
-UNIVERSE = 1 # DMX universe
+    if stillActive == False:
+        del currentStacks[stackid]
+        return "Finished (ran out of lights)"
 
-currentLightValues = [] #set of values to send
-currentLightTimecodes = [] # which thread controls what
+    try:
+        currentScene = stackdata[currentpos]['channels']
+        currentSceneBeats = stackdata[currentpos]['beats']
+    except IndexError:
+        currentpos = 0
+        currentScene = stackdata[currentpos]['channels']
+        currentSceneBeats = stackdata[currentpos]['beats']
 
-# Pad arrays (to stop errors from occuring)
-currentLightValues.extend([float(0)] * (CHANNELS - len(currentLightValues)))
-currentLightTimecodes.extend([0] * (CHANNELS - len(currentLightTimecodes)))
+    if currentbeat == 0:
+        # do current scene and set all other applicable lights to 0 (on same fadetime)
+        backScene = []
+        backScene.extend([None] * (CHANNELS))
 
-oldLightValues = [] # to check that we aren't sending the same list each time
+        for i in applicablelights:
+            if currentScene[i] == None:# not in currentScene
+                backScene[i] = 0
+            # add to backscene
+        #print("About to start new scenes")
+        #print(str(currentScene))
+        #print(str(backScene))
+        startScene(backScene, fadetime=globalFadetime, timestamp=timestamp)
+        startScene(currentScene, fadetime=globalFadetime, timestamp=timestamp)
+        #print(str(currentLightValues))
 
-sendingActive = False
+    # add to currentper based on beats and bpm etc
+    currentbeat = currentbeat + 1
+    if currentbeat >= currentSceneBeats:
+        currentbeat = 0
+        currentpos = currentpos + 1
+
+    currentStacks[stackid] = {"position":currentpos, "beat":currentbeat}
+
+    # schedule scene in 1 beat
+    wait = 60/bpm
+    print("test" + str(currentbeat) + " " + str(currentpos))
+    threading.Timer(wait, doStack, [stackdata, stackid, timestamp, applicablelights], {'currentpos': currentpos, 'currentbeat':currentbeat}).start()
+
+    return "Nope"
 
 def startScene(endstate, fadetime=0, timestamp=None):
     if sendingActive == False:
@@ -115,7 +212,7 @@ def startScene(endstate, fadetime=0, timestamp=None):
         elif light == currentLightValues[i]:
             changeAmount.append(0)
             #while not a change this signals that whatever previous process had control over it
-            if currentLightTimecodes[i] < timestamp:
+            if currentLightTimecodes[i] <= timestamp:
                 currentLightTimecodes[i] = timestamp
                 toChange = toChange + 1
         else:
@@ -126,7 +223,7 @@ def startScene(endstate, fadetime=0, timestamp=None):
             else:
                 changeAmount.append(float((light - currentLightValue)/tickgoal))
 
-            if currentLightTimecodes[i] < timestamp:
+            if currentLightTimecodes[i] <= timestamp:
                 currentLightTimecodes[i] = timestamp
                 toChange = toChange + 1
 
@@ -157,7 +254,7 @@ def sendData():
         # but due to issues with threading that would not work in this version
         # so I'm using their JSON api
         d = ','.join(str(int(x+0.5)) for x in currentLightValues)
-        print(str(currentLightValues))
+        #print(str(currentLightValues))
         requests.post('http://127.0.0.1:9090/set_dmx', data = {'u':'1', 'd':d})
     else:
         print "Sending Finished"
