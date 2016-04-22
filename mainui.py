@@ -1,6 +1,6 @@
 from flask import request, session, redirect, url_for, \
-    render_template, flash, Blueprint
-import MySQLdb
+    render_template, flash, Blueprint, g
+import sqlite3
 
 mainui = Blueprint('mainui', __name__)
 mainui.config = {}
@@ -27,20 +27,22 @@ def index():
 
 # Database shisazt
 def connect_db():
-    return MySQLdb.connect(host=mainui.config['DB_HOST'],    # your host, usually localhost
-                         user=mainui.config['DB_USER'],         # your username
-                         passwd=mainui.config['DB_PASS'],  # your password
-                         db=mainui.config['DB_NAME'])        # name of the data base
+    return sqlite3.connect(mainui.config['DATABASE'])
 
-def query_db(query, values=0):
-    """ Query DB & commit """
-    db = connect_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    if isinstance(values, (list, tuple)):
-        cur.execute(query, values)
-    else:
-        cur.execute(query)
-    output = cur.fetchall()
-    db.commit()
-    db.close()
-    return output
+@mainui.before_request
+def before_request():
+    g.db = connect_db()
+    g.db.execute("PRAGMA foreign_keys = ON")
+    g.db.row_factory = sqlite3.Row
+
+@mainui.teardown_request
+def teardown_request(exception):
+    db = getattr(g, 'db', None)
+    if db is not None:
+        db.close()
+
+def query_db(query, args=(), one=False):
+    cur = g.db.execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv

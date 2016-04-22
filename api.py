@@ -1,10 +1,8 @@
 import time
 import threading
-from flask import render_template, Blueprint
-import MySQLdb
-from decorators import async
+from flask import render_template, Blueprint, g
 import requests
-
+import sqlite3
 
 api = Blueprint('api', __name__)
 api.config = {}
@@ -44,7 +42,7 @@ def index():
 @api.route('/channel/<int:chanid>/value/<int:value>')
 @api.route('/channel/<int:chanid>/value/<int:value>/fade/<int:fadetime>')
 def changeChannel(chanid, value, fadetime=0):
-    channel = query_db("SELECT * FROM channels WHERE cid = %s", [chanid])[0]['cnumber']
+    channel = query_db("SELECT * FROM channels WHERE cid = ?", [chanid])[0]['cnumber']
 
     data = []
     for i in range(CHANNELS):
@@ -57,7 +55,7 @@ def changeChannel(chanid, value, fadetime=0):
 @api.route('/scene/<int:sceneid>/value/<int:value>')
 @api.route('/scene/<int:sceneid>/value/<int:value>/fade/<int:fadetime>')
 def changeScene(sceneid, value, fadetime=0):
-    allChannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = %s", [sceneid])
+    allChannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = ?", [sceneid])
     data = []
     data.extend([None] * (CHANNELS - len(data)))
 
@@ -70,7 +68,7 @@ def changeScene(sceneid, value, fadetime=0):
 @api.route('/stack/<int:stackid>/value/<int:value>')
 @api.route('/stack/<int:stackid>/value/<int:value>/fade/<int:fadetime>')
 def changeStack(stackid, value, fadetime=0):
-    stack = query_db("SELECT * FROM stack_scenes_order WHERE stackid = %s", [stackid])
+    stack = query_db("SELECT * FROM stack_scenes_order WHERE stackid = ?", [stackid])
     global globalFadetime
     globalFadetime = fadetime
 
@@ -81,7 +79,7 @@ def changeStack(stackid, value, fadetime=0):
     for row in stack:
         # note we don't need to keep track of
         sceneid = row["sceneid"]
-        allChannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = %s", [sceneid])
+        allChannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = ?", [sceneid])
         sceneData =dict()
         sceneData['beats'] = row["beats"]
         data = []
@@ -118,26 +116,6 @@ def changeBPM(beats):
     global bpm
     bpm = beats
     return "Bpm = " + str(bpm)
-
-# Database shisazt
-def connect_db():
-    return MySQLdb.connect(host=api.config['DB_HOST'],    # your host, usually localhost
-                         user=api.config['DB_USER'],         # your username
-                         passwd=api.config['DB_PASS'],  # your password
-                         db=api.config['DB_NAME'])        # name of the data base
-
-def query_db(query, values=0):
-    """ Query DB & commit """
-    db = connect_db()
-    cur = db.cursor(MySQLdb.cursors.DictCursor)
-    if isinstance(values, (list, tuple)):
-        cur.execute(query, values)
-    else:
-        cur.execute(query)
-    output = cur.fetchall()
-    db.commit()
-    db.close()
-    return output
 
 
 def doStack(stackdata, stackid, timestamp, applicablelights, currentpos=0, currentbeat=0):
@@ -186,7 +164,7 @@ def doStack(stackdata, stackid, timestamp, applicablelights, currentpos=0, curre
 
     # schedule scene in 1 beat
     wait = 60/bpm
-    print("test" + str(currentbeat) + " " + str(currentpos))
+    #print("test" + str(currentbeat) + " " + str(currentpos))
     threading.Timer(wait, doStack, [stackdata, stackid, timestamp, applicablelights], {'currentpos': currentpos, 'currentbeat':currentbeat}).start()
 
     return "Nope"
@@ -268,6 +246,28 @@ def restartSending():
 
 def stopSending():
     sendingActive = False
+
+def connect_db():
+    return sqlite3.connect(api.config['DATABASE'])
+
+@api.before_request
+def before_request():
+    g.db = connect_db()
+    g.db.execute("PRAGMA foreign_keys = ON;")
+    g.db.row_factory = sqlite3.Row
+
+@api.teardown_request
+def teardown_request(exception):
+    db = getattr(g, 'db', None)
+    if db is not None:
+        db.close()
+
+def query_db(query, args=(), one=False):
+    cur = g.db.execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
 
 
 if __name__ == '__main__':
