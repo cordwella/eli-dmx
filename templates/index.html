@@ -1,5 +1,44 @@
 {% extends "layout.html" %}
 {% block body %}
+<script>
+// gen list of each type in stack, add onchange for each of them
+// on change send msg to the api
+// TODO: add in footer for the bpm and the fadetime each with their own onchange
+
+//alert("Death");
+var fadetime = 0;
+
+
+function sendChannel(chanid) {
+    var value = document.getElementById("chan-"+chanid).value;
+    //alert("api/channel/"+ chanid +"/value/"+ value + "/fade/" + fadetime);
+    var url = "api/channel/"+chanid+"/value/"+value+"/fade/"+fadetime;
+    httpGetAsync(url);
+    //$.get(url);
+}
+
+function sendScene(sceneid) {
+    var value = document.getElementById("scene-"+sceneid).value;
+    //var value = 0;
+    var url = "api/scene/"+sceneid+"/value/"+value+"/fade/"+fadetime;
+    httpGetAsync(url)
+}
+
+function sendStack(stackid) {
+    var value = document.getElementById("stack-"+stackid).value;
+    var url = "api/stack/"+stackid+"/value/"+value+"/fade/"+fadetime;
+    httpGetAsync(url);
+}
+
+function httpGetAsync(theUrl)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("GET", theUrl, true); // true for asynchronous
+    xmlHttp.send(null);
+}
+//sendChannel(1);
+</script>
+
 <section id="channels" class="col-lg-4 col-md-6 col-sm-12">
     <h2> Channels </h2>
     <ul class="slider-set list-group">
@@ -12,7 +51,7 @@
                 </h4>
                 <span class="edit-link label label-primary chanid">Edit</span>
                 <span class="chanid label label-info"> {{ channel.cnumber }} </span>
-                <input id="chan-{{channel.cid}}" type="range" value="0" min="0" max="255">
+                <input id="chan-{{channel.cid}}" type="range" value="0" min="0" max="255" onchange="sendChannel( '{{ channel.cid }}' )">
             </li>
         {% else %}
           <li><em>No channels.</em>
@@ -32,7 +71,7 @@
                     {% endif %}
                 </h4>
                 <span class="edit-link label label-primary chanid">Edit</span>
-                <input id="scene-{{scene.sid}}" type="range" value="0" min="0" max="255">
+                <input id="scene-{{scene.sid}}" type="range" value="0" min="0" max="255" onchange="sendScene('{{scene.sid}}')">
             </li>
         {% else %}
           <li><em>No scenes so far.</em>
@@ -52,7 +91,7 @@
                     {% endif %}
                 </h4>
                 <span class="edit-link label label-primary chanid">Edit</span>
-                <input id="stack-{{stack.stid}}" type="range" value="0" min="0" max="255">
+                <input id="stack-{{stack.stid}}" type="range" value="0" min="0" max="255" onchange="sendStack('{{stack.stid}}')">
             </li>
         {% else %}
           <li><em>No stacks so far.</em>
