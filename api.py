@@ -46,6 +46,16 @@ def index():
     # also the current global fade time and the state of the chases
     return "Test"
 
+@api.route('/all/<int:value>')
+@api.route('/all/<int:value>/fade/<int:fadetime>')
+def changeAll(value, fadetime=0):
+    data = []
+    data.extend([value] * CHANNELS)
+
+    startScene(data, fadetime=fadetime)
+    return str(data)
+
+
 @api.route('/channel/<int:chanid>/value/<int:value>')
 @api.route('/channel/<int:chanid>/value/<int:value>/fade/<int:fadetime>')
 def changeChannel(chanid, value, fadetime=0):
