@@ -3,19 +3,17 @@ PRAGMA journal_mode = MEMORY;
 PRAGMA foreign_keys = ON;
 BEGIN TRANSACTION;
 CREATE TABLE "categories" (
-  "id" int(11) NOT NULL,
+  "id" INTEGER NOT NULL PRIMARY KEY,
   "category" varchar(20) NOT NULL,
-  PRIMARY KEY ("id"),
   CONSTRAINT cat_uni UNIQUE ("category")
 );
 INSERT INTO "categories" VALUES (1,'General');
 
 CREATE TABLE "channels" (
-  "cid" int(11) NOT NULL,
+  "cid" INTEGER NOT NULL PRIMARY KEY,
   "cname" varchar(25) NOT NULL,
   "cnumber" smallint(6) NOT NULL,
-  "chancategoryid" int(11) DEFAULT NULL,
-  PRIMARY KEY ("cid"),
+  "chancategoryid" INTEGER DEFAULT NULL,
   CONSTRAINT cnum_uni UNIQUE ("cnumber"),
   CONSTRAINT cname_uni UNIQUE ("cname"),
   FOREIGN KEY ("chancategoryid") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE SET NULL
@@ -24,10 +22,9 @@ INSERT INTO "channels" VALUES (1,'Big Left',1,1);
 INSERT INTO "channels" VALUES (2,'Big Right',2,NULL);
 
 CREATE TABLE "scenes" (
-  "sid" int(11) NOT NULL, -- 'scene id db identifier',
+  "sid" INTEGER NOT NULL PRIMARY KEY, -- 'scene id db identifier',
   "sname" varchar(25) NOT NULL,--  'human readable scene name',
-  "scenecategoryid" int(11) DEFAULT NULL,
-  PRIMARY KEY ("sid"),
+  "scenecategoryid" INTEGER DEFAULT NULL,
   CONSTRAINT sname_uni UNIQUE ("sname"),
   FOREIGN KEY ("scenecategoryid") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE SET NULL
 );
@@ -36,11 +33,10 @@ INSERT INTO "scenes" VALUES (2,'Stage Lights',NULL);
 
 
 CREATE TABLE "scene_channels" (
-  "id" int(11) NOT NULL,
-  "sceneid" int(11) NOT NULL, --  'fk scenes sid',
-  "channelid" int(11) NOT NULL, --  'fk channels cid',
+  "id" INTEGER NOT NULL PRIMARY KEY,
+  "sceneid" INTEGER NOT NULL, --  'fk scenes sid',
+  "channelid" INTEGER NOT NULL, --  'fk channels cid',
   "percent" decimal(3,0) DEFAULT NULL, -- '100 is full 0 is off null means does not apply',
-  PRIMARY KEY ("id"),
   CONSTRAINT scene_channel_uni UNIQUE ("sceneid","channelid"),
   FOREIGN KEY ("channelid") REFERENCES "channels" ("cid") ON DELETE CASCADE,
   FOREIGN KEY ("sceneid") REFERENCES "scenes" ("sid") ON DELETE CASCADE
@@ -51,23 +47,21 @@ INSERT INTO "scene_channels" VALUES (3,2,2,100);
 
 
 CREATE TABLE "stacks" (
-  "stid" int(11) NOT NULL, -- 'stack id',
+  "stid" INTEGER NOT NULL PRIMARY KEY, -- 'stack id',
   "stname" varchar(25) NOT NULL, -- 'stack name',
-  "stackcategoryid" int(11) DEFAULT NULL,
-  PRIMARY KEY ("stid"),
+  "stackcategoryid" INTEGER DEFAULT NULL,
   CONSTRAINT stname_uni UNIQUE ("stname"),
   FOREIGN KEY ("stackcategoryid") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE SET NULL
 );
 
 
 CREATE TABLE "stack_scenes" (
-  "id" int(11) NOT NULL,
-  "stackid" int(11) NOT NULL,
-  "sceneid" int(11) NOT NULL,
+  "id" INTEGER NOT NULL PRIMARY KEY,
+  "stackid" INTEGER NOT NULL,
+  "sceneid" INTEGER NOT NULL,
   "beats" int(5) NOT NULL, -- 'how many beats the scene should last for in the stack',
-  "stackorder" int(11) NOT NULL, --'what position in the stack should it occur in',
+  "stackorder" INTEGER NOT NULL, --'what position in the stack should it occur in',
   "percent" decimal(3,0) NOT NULL,
-  PRIMARY KEY ("id"),
   CONSTRAINT one_at_a_time_uni UNIQUE ("stackid","stackorder"),
   FOREIGN KEY ("sceneid") REFERENCES "scenes" ("sid") ON DELETE CASCADE,
   FOREIGN KEY ("stackid") REFERENCES "stacks" ("stid") ON DELETE CASCADE
@@ -93,9 +87,9 @@ CREATE VIEW `channel_with_category` AS select `channels`.`cid` AS `cid`,`channel
 -- Table for various pieces of info (IE BPM & fadetime)
 
 CREATE TABLE "settings"(
-    "id" int(11) NOT NULL,
+    "id" INTEGER NOT NULL,
     "name" varchar(10) NOT NULL,
-    "value" int(11) NOT NULL,
+    "value" INTEGER NOT NULL,
     PRIMARY KEY ("id"),
     CONSTRAINT set_name UNIQUE ("name")
 );

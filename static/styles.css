@@ -5,6 +5,10 @@ body{
     color: #9d9d9d;
 }
 
+.alert{
+    margin: 15px;
+}
+
 section{
     padding: 5px;
 }
@@ -20,7 +24,9 @@ ul.slider-set li h4{
     display: block;
     float: left;
 }
-
+button{
+    color: black;
+}
 .chanid{
     float: right;
 }
@@ -63,4 +69,8 @@ p.input-title{
   /* Set the fixed height of the footer here */
   /*height: 60px;*/
   background-color: black;
+}
+
+form{
+    margin: 15px;
 }

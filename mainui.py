@@ -32,6 +32,56 @@ def test():
 # this is not the most efficent solution however given time constraints
 # im tired
 
+@mainui.route('/addcat/<name>')
+def addCategory(name):
+    query_db("INSERT INTO categories ('category') values (?)", [name])
+    return "OK"
+
+@mainui.route('/edit/channel/<int:chanid>',  methods=['GET', 'POST'])
+@mainui.route('/edit/channel/new',  methods=['GET', 'POST'])
+def editChannel(chanid=None):
+
+    if request.method == "POST":
+        cnumber = request.form.get('number', "None")
+        cname = request.form.get('name', "None")
+        catid = request.form.get('category', "None")
+
+        if chanid == None:
+            try:
+                query_db("INSERT INTO channels ('cname', 'cnumber', 'chancategoryid') VALUES (?,?,?)", [cname, cnumber, catid])
+                chanid = query_db("SELECT cid FROM channels where cnumber = ?", [cnumber])
+            except:
+                flash("Database error, probs not unique values")
+                categories = query_db("SELECT * FROM categories")
+                return render_template("editchannel.html", cid=chanid, cname=cname, cnumber=cnumber, categories=categories, catid=catid)
+
+        else:
+            try:
+                query_db("UPDATE channels SET 'cname' = ?, 'cnumber' = ?, 'chancategoryid' = ? WHERE cid = ?", [cname, cnumber, catid, cnumber])
+            except:
+                flash("Database error, probs not unique values")
+                categories = query_db("SELECT * FROM categories")
+                return render_template("editchannel.html", cid=chanid, cname=cname, cnumber=cnumber, categories=categories, catid=catid)
+
+        flash("Channel '"+cname+"' saved to database")
+        return redirect( url_for('mainui.index') )
+
+    categories = query_db("SELECT * FROM categories")
+
+    if(chanid != None):
+        channel = query_db("SELECT * FROM channels WHERE cid = ?", [chanid])[0]
+        cname = channel["cname"]
+        cnumber = channel["cnumber"]
+        return render_template("editchannel.html", cid=chanid, cname=cname, cnumber=cnumber, categories=categories)
+
+    return render_template("editchannel.html", cid=chanid, categories=categories)
+
+@mainui.route('/delete/channel/<int:chanid>')
+def deleteChannel(chanid):
+    query_db("DELETE FROM channels WHERE cid = ?", [chanid])
+    flash("Channel Deleted")
+    return redirect(url_for('mainui.index'))
+
 # Database shisazt
 def connect_db():
     return sqlite3.connect(mainui.config['DATABASE'])

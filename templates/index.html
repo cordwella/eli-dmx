@@ -63,7 +63,8 @@ function sendFade(){
                         <span class="category label label-primary">{{ channel.category }}</span>
                     {% endif %}
                 </h4>
-                <a href="/edit/channel/{{channel.cid}}" target="_blank"><span class="edit-link label label-primary">Edit</span></a>
+                <a href="/edit/channel/{{channel.cid}}"  ><span class="edit-link label label-primary">Edit</span></a>
+                <a href="/delete/channel/{{channel.cid}}"><span class="edit-link label label-primary">Delete</span></a>
                 <span class="chanid label label-info"> {{ channel.cnumber }} </span>
                 <input id="chan-{{channel.cid}}" type="range" value="0" min="0" max="255" onchange="sendChannel( '{{ channel.cid }}' )">
             </li>
@@ -84,7 +85,8 @@ function sendFade(){
                         <span class="category label label-primary">{{ scene.category }}</span>
                     {% endif %}
                 </h4>
-                <a href="/edit/scene/{{scene.sid}}" target="_blank"><span class="edit-link label label-primary">Edit</span></a>
+                <a href="/edit/scene/{{scene.sid}}"  ><span class="edit-link label label-primary">Edit</span></a>
+                <a href="/delete/scene/{{scene.sid}}"><span class="edit-link label label-primary">Delete</span></a>
                 <input id="scene-{{scene.sid}}" type="range" value="0" min="0" max="255" onchange="sendScene('{{scene.sid}}')">
             </li>
         {% else %}
@@ -104,7 +106,8 @@ function sendFade(){
                         <span class="category label label-primary">{{ stack.category }}</span>
                     {% endif %}
                 </h4>
-                <a href="/edit/stack/{{stack.stid}}" target="_blank"><span class="edit-link label label-primary">Edit</span></a>
+                <a href="/edit/stack/{{stack.stid}}"  ><span class="edit-link label label-primary">Edit</span></a>
+                <a href="/delete/stack/{{stack.stid}}"><span class="edit-link label label-primary">Delete</span></a>
                 <input id="stack-{{stack.stid}}" type="range" value="0" min="0" max="255" onchange="sendStack('{{stack.stid}}')">
             </li>
         {% else %}

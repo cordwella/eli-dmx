@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<form action="{{url_for('mainui.editChannel', chanid=cid)}}" method="post">
+    <div class="input-group">
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Name</p></span>
+        <input type="text" class="form-control" id="name" name="name" placeholder="Channel Name"
+        {% if cname %}
+            value="{{cname}}"
+        {% endif %}
+         aria-describedby="basic-addon2" required>
+    </div>
+    <br>
+    <div class="input-group">
+
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Channel DMX number</p></span>
+        <input type="number" class="form-control" id="number" name="number" placeholder="Channel DMX number"
+         {% if cnumber %}
+             value="{{cnumber}}"
+         {% endif %}
+        aria-describedby="basic-addon2" required>
+
+
+    </div>
+    <br>
+    <!-- This here should be categories -->
+    <div class="input-group">
+
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Category</p></span>
+        <select class="form-control" id="category" name="category"
+        {% if catid %}
+            value="{{catid}}"
+        {% endif %}
+        >
+            {% for category in categories %}
+            <option value="{{ category.id }}"> {{ category.category }} </option>
+            {% endfor %}
+        </select>
+
+    </div>
+    <br>
+
+    <input type=submit value=Save>
+</form>
+{% endblock %}
