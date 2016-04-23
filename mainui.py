@@ -17,9 +17,16 @@ def index():
     channels = query_db("SELECT * FROM channel_with_category")
     scenes = query_db("SELECT * FROM scene_with_category")
     stacks = query_db("SELECT * FROM stack_with_category")
+    bpm = query_db("SELECT value FROM settings WHERE name='bpm'")[0]["value"]
+    fadetime = query_db("SELECT value FROM settings WHERE name='fadetime'")[0]["value"]
 
-    return render_template('index.html', channels=channels, scenes=scenes, stacks=stacks)
+    return render_template('index.html', channels=channels, scenes=scenes, stacks=stacks, fadetime=fadetime, bpm=bpm)
 
+@mainui.route('/test')
+def test():
+    bpm = query_db("SELECT value FROM settings WHERE name='bpm'")[0]["value"]
+    fadetime = query_db("SELECT value FROM settings WHERE name='fadetime'")[0]["value"]
+    return "bpm: " + str(bpm) +" fade :" + str(fadetime)
 ## when editing scenes, stacks etc, delete all of them in the db and then re add them
 # as defined in ui
 # this is not the most efficent solution however given time constraints
@@ -37,6 +44,7 @@ def before_request():
 
 @mainui.teardown_request
 def teardown_request(exception):
+    g.db.commit()
     db = getattr(g, 'db', None)
     if db is not None:
         db.close()

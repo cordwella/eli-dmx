@@ -10,6 +10,7 @@ var fadetime = 0;
 
 
 function sendChannel(chanid) {
+    fadetime = document.getElementById('fadetime-input-range').value;
     var value = document.getElementById("chan-"+chanid).value;
     //alert("api/channel/"+ chanid +"/value/"+ value + "/fade/" + fadetime);
     var url = "api/channel/"+chanid+"/value/"+value+"/fade/"+fadetime;
@@ -18,6 +19,7 @@ function sendChannel(chanid) {
 }
 
 function sendScene(sceneid) {
+    fadetime = document.getElementById('fadetime-input-range').value;
     var value = document.getElementById("scene-"+sceneid).value;
     //var value = 0;
     var url = "api/scene/"+sceneid+"/value/"+value+"/fade/"+fadetime;
@@ -25,6 +27,7 @@ function sendScene(sceneid) {
 }
 
 function sendStack(stackid) {
+    fadetime = document.getElementById('fadetime-input-range').value;
     var value = document.getElementById("stack-"+stackid).value;
     var url = "api/stack/"+stackid+"/value/"+value+"/fade/"+fadetime;
     httpGetAsync(url);
@@ -35,6 +38,17 @@ function httpGetAsync(theUrl)
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.open("GET", theUrl, true); // true for asynchronous
     xmlHttp.send(null);
+}
+
+function sendBpm(){
+    var bpm = document.getElementById('bpm-input-range').value;
+    httpGetAsync("/api/bpm/"+bpm);
+
+}
+
+function sendFade(){
+    fadetime = document.getElementById('fadetime-input-range').value;
+    httpGetAsync("/api/fade/"+fadetime);
 }
 //sendChannel(1);
 </script>
@@ -49,7 +63,7 @@ function httpGetAsync(theUrl)
                         <span class="category label label-primary">{{ channel.category }}</span>
                     {% endif %}
                 </h4>
-                <span class="edit-link label label-primary chanid">Edit</span>
+                <a href="/edit/channel/{{channel.cid}}" target="_blank"><span class="edit-link label label-primary">Edit</span></a>
                 <span class="chanid label label-info"> {{ channel.cnumber }} </span>
                 <input id="chan-{{channel.cid}}" type="range" value="0" min="0" max="255" onchange="sendChannel( '{{ channel.cid }}' )">
             </li>
@@ -70,7 +84,7 @@ function httpGetAsync(theUrl)
                         <span class="category label label-primary">{{ scene.category }}</span>
                     {% endif %}
                 </h4>
-                <span class="edit-link label label-primary chanid">Edit</span>
+                <a href="/edit/scene/{{scene.sid}}" target="_blank"><span class="edit-link label label-primary">Edit</span></a>
                 <input id="scene-{{scene.sid}}" type="range" value="0" min="0" max="255" onchange="sendScene('{{scene.sid}}')">
             </li>
         {% else %}
@@ -90,7 +104,7 @@ function httpGetAsync(theUrl)
                         <span class="category label label-primary">{{ stack.category }}</span>
                     {% endif %}
                 </h4>
-                <span class="edit-link label label-primary chanid">Edit</span>
+                <a href="/edit/stack/{{stack.stid}}" target="_blank"><span class="edit-link label label-primary">Edit</span></a>
                 <input id="stack-{{stack.stid}}" type="range" value="0" min="0" max="255" onchange="sendStack('{{stack.stid}}')">
             </li>
         {% else %}
@@ -98,4 +112,25 @@ function httpGetAsync(theUrl)
         {% endfor %}
     </ul>
 </section>
+<footer class="footer">
+    <div class="col-md-6 col-sm-12">
+        <div class="input-group">
+            <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >BPM:</p></span>
+            <input type="text" class="form-control" placeholder="Beats Per minute" aria-describedby="basic-addon2" value={{bpm}} onchange="sendBpm()"
+            id="bpm-input-text" oninput="getElementById('bpm-input-range').value = this.value">
+
+            <input id="bpm-input-range" class="form-control" type="range" value="{{bpm}}" min="30" max="190" onchange="sendBpm()" oninput="getElementById('bpm-input-text').value = this.value">
+
+        </div>
+    </div>
+    <div class="col-md-6 col-sm-12">
+        <div class="input-group">
+            <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Fadetime (seconds):</p></span>
+            <input type="text" class="form-control" id="fadetime-input-text" placeholder="Fadetime" aria-describedby="basic-addon2" value={{fadetime}} onchange="sendFade()"
+            oninput="getElementById('fadetime-input-range').value = this.value * 1000">
+
+            <input class="form-control" id="fadetime-input-range" type="range" value="{{fadetime}}" min="0" max="30000" onchange="sendFade()" oninput="getElementById('fadetime-input-text').value = (this.value/1000)">
+        </div>
+    </div>
+</div>
 {% endblock %}

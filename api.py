@@ -10,7 +10,15 @@ api.config = {}
 CHANNELS = 24 #will make this dynamic when intergrating DB
 TICK_INTERVAL = 100 #send data ever x ms
 UNIVERSE = 1 # DMX universe
-bpm = 60
+try:
+    bpm = int(query_db("SELECT value FROM settings where name = 'bpm'")[0]['value'])
+except:
+    bpm = 60
+
+try:
+    globalFadetime = int(query_db("SELECT value FROM settings where name = fadetime")[0]['value']) #note this currently only applies to stacks
+except:
+    globalFadetime = 0
 sendingActive = False
 currentStacks = {}
 
@@ -25,7 +33,6 @@ oldLightValues = [] # to check that we aren't sending the same list each time
 
 sendingActive = False
 
-globalFadetime = 0 #note this currently only applies to stacks
 
 @api.record
 def record_params(setup_state):
@@ -109,12 +116,15 @@ def changeStack(stackid, value, fadetime=0):
 def changeFadetime(fadetime):
     global globalFadetime
     globalFadetime = fadetime
-    return "Fadetime = " + str(globalFadetime)
+    test = query_db("UPDATE settings SET value = ? WHERE name = 'fadetime'", [fadetime])
+
+    return "Fadetime = " + str(globalFadetime) + str(test)
 
 @api.route('/bpm/<int:beats>')
 def changeBPM(beats):
     global bpm
     bpm = beats
+    query_db("UPDATE settings SET value = ? WHERE name = 'bpm'", [bpm])
     return "Bpm = " + str(bpm)
 
 
@@ -258,6 +268,7 @@ def before_request():
 
 @api.teardown_request
 def teardown_request(exception):
+    g.db.commit()
     db = getattr(g, 'db', None)
     if db is not None:
         db.close()

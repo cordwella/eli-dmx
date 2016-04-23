@@ -1,8 +1,13 @@
 body{
-    margin: 15px;
     margin-top: 60px;
+    margin-bottom: 160px;
+    background-color: black;
+    color: #9d9d9d;
 }
 
+section{
+    padding: 5px;
+}
 ul.slider-set{
     list-style: none;
 }
@@ -23,4 +28,39 @@ ul.slider-set li h4{
 .edit-link{
     float: right;
     margin-left: 5px;
+}
+
+.list-group, .list-group-item{
+    background-color: black;
+    border-color: #2f2f2f;
+}
+
+p.input-title{
+    width: 100px;
+}
+
+.input-group{
+    width: fill;
+    background-color: #2f2f2f;
+    border-color: #2f2f2f;
+}
+.form-control{
+    background-color: #181818;
+    border-color: #2f2f2f;
+
+}
+
+.input-group-addon{
+    background-color: black;
+    border-color: #2f2f2f;
+
+}
+.footer {
+  position: fixed;
+  /*padding: 10px;*/
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  /*height: 60px;*/
+  background-color: black;
 }
