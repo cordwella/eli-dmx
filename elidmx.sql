@@ -84,6 +84,7 @@ CREATE VIEW `stack_with_category` AS select `stacks`.`stid` AS `stid`,`stacks`.`
 
 CREATE VIEW `channel_with_category` AS select `channels`.`cid` AS `cid`,`channels`.`cname` AS `cname`,`channels`.`cnumber` AS `cnumber`,`channels`.`chancategoryid` AS `chancategoryid`,`categories`.`category` AS `category` from (`channels` left join `categories`  on((`channels`.`chancategoryid` = `categories`.`id`)));
 
+CREATE VIEW stack_scenes_full AS SELECT stack_scenes.*, scene_with_category.* FROM stack_scenes LEFT JOIN scene_with_category on scene_with_category.sid = stack_scenes.sceneid ORDER BY stackorder;
 -- Table for various pieces of info (IE BPM & fadetime)
 
 CREATE TABLE "settings"(

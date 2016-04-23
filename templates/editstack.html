@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+{% block body %}
+<!--  -->
+<form action="{{url_for('mainui.editStack', stackid=stackid)}}" method="post" id="mainForm">
+    <div class="input-group">
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Name</p></span>
+        <input type="text" class="form-control" id="name" name="name" placeholder="Stack Name"
+        {% if name %}
+            value="{{name}}"
+        {% endif %}
+         aria-describedby="basic-addon2" required>
+    </div>
+    <br>
+    <!-- This here should be categories -->
+    <div class="input-group" >
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Category</p></span>
+        <select class="form-control" id="category" name="category"
+            {% if catid %}
+                value="{{catid}}"
+            {% endif %}
+            >
+            {% for category in categories %}
+            <option value="{{ category.id }}"> {{ category.category }} </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-6" id="full-stack">
+        <h3> Scenes In Current Stack </h3>
+        <ol id="stackScenes" class=slider-set >
+            {% for scene in stscenes %}
+                <li class=list-group-item id="{{scene.sid}}">
+                    <h4>{{ scene.sname }}
+                        {% if scene.category %}
+                            <span class="category label label-primary">{{ scene.category }}</span>
+                        {% endif %}
+                    </h4>
+                    <i class="js-remove">&times;</i>
+                    <input id="range-{{scene.sid}}" type="range" value="{{scene.percent}}" min="0" max="100" oninput="sendScene({{scene.sid}}, this.value)">
+                    <div class="input-group">
+
+                        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >No. Beats</p></span>
+
+                        <input type="number" class="form-control" id="beats" name="beats"
+
+                        {% if scene.beats %}
+                            value="{{scene.beats}}"
+                        {% else %}
+                            value=1
+                        {% endif %}
+                         aria-describedby="basic-addon2" required>
+                    </div>
+                </li>
+            {% else %}
+              <li><em>No scenes so far. </em>
+                  <i class="js-remove">&times;</i>
+              </li>
+            {% endfor %}
+
+        </ol>
+    </div>
+
+    <div class="col-md-6" >
+        <h3> All Scenes </h3>
+        <ol id="allScenes" class=slider-set>
+            {% for scene in scenes %}
+                <li class=list-group-item id="{{scene.sid}}">
+                    <h4>{{ scene.sname }}
+                        {% if scene.category %}
+                            <span class="category label label-primary">{{ scene.category }}</span>
+                        {% endif %}
+                    </h4>
+                    <i class="js-remove">&times;</i>
+                    <input id="range-{{scene.sid}}" type="range" value="0" min="0" max="100" oninput="sendScene({{scene.sid}}, this.value)">
+                    <div class="input-group">
+
+                        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >No. Beats</p></span>
+
+                        <input type="number" class="form-control" id="beats" name="beats" value=1
+                        aria-describedby="basic-addon2" required>
+                    </div>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+    <input type=submit value=Save class="button">
+    <script src="{{ url_for('static', filename='jquery-2.2.3.min.js')}}"></script>
+
+    <script>
+    httpGetAsync("/api/all/0");
+
+    function sendScene(sceneid, value) {
+        var url = "/api/all/0";
+        httpGetAsync(url);
+        value = Math.round(value*255/100);
+        //var value = 0;
+        url = "/api/scene/"+sceneid+"/value/"+value;
+        httpGetAsync(url);
+    }
+
+    // Code to send scenes while this is going on
+    function httpGetAsync(theUrl)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous
+        xmlHttp.send(null);
+    }
+
+    // Code to get the correct output for the scene
+    $("#mainForm").submit( function(eventObj) {
+        // Figure out a way of sending the data as a string possibly json
+        // and then append it to this
+        var scenes = [];
+        var values = [];
+        var beatlist = [];
+
+        $("ol#stackScenes li").each(function() {
+            if(Number.isInteger(parseInt($(this).attr('id')))){
+                scenes.push($(this).attr('id'));
+                // Get range value and push
+                values.push($(this).find("[type=range]").val());
+                // Get beat value and push
+                beatlist.push($(this).find("#beats").val());
+            }
+        });
+        scenes = scenes.join();
+        values = values.join();
+        beatlist = beatlist.join();
+        $(this).append('<input type="hidden" name="scenes" id="scenes" value="'+scenes+'">');
+        $(this).append('<input type="hidden" name="values" id="values" value="'+values+'">');
+        $(this).append('<input type="hidden" name="beatlist" id="beatlist" value="'+ beatlist +'">');
+        return true;
+    });
+    </script>
+
+    <script src="{{url_for('static', filename='Sortable.js')}}"></script>
+    <script>
+    // Code for the groups
+	[{
+		name: 'advanced',
+		pull: true,
+		put: true,
+	},
+	{
+		name: 'advanced',
+		pull: 'clone',
+		put: false
+	}].forEach(function (groupOpts, i) {
+        if (i == 0){
+            Sortable.create(stackScenes, {
+    			sort: (i != 1),
+    			group: groupOpts,
+    			animation: 150,
+                filter: '.js-remove',
+                onFilter: function (evt) {
+                    evt.item.parentNode.removeChild(evt.item);
+                }
+    		});
+        }else{
+            Sortable.create(allScenes, {
+    			sort: (i != 1),
+    			group: groupOpts,
+    			animation: 150
+    		});
+        }
+
+	});
+    </script>
+    <!-- this one is gonna need a lot of js so that submit button won't submit -->
+</form>
+{% endblock %}

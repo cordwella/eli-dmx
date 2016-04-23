@@ -37,6 +37,15 @@ def addCategory(name):
     query_db("INSERT INTO categories ('category') values (?)", [name])
     return "OK"
 
+
+@mainui.route('/delete/category/<int:catid>')
+def deleteCategory(catid):
+    # Everything is set up to delete via the foriegn keys
+    query_db("DELETE FROM categories WHERE id = ?", [catid])
+    flash("Category Deleted")
+    return redirect(url_for('mainui.index'))
+
+
 @mainui.route('/edit/channel/<int:chanid>',  methods=['GET', 'POST'])
 @mainui.route('/edit/channel/new',  methods=['GET', 'POST'])
 def editChannel(chanid=None):
@@ -82,15 +91,121 @@ def deleteChannel(chanid):
     flash("Channel Deleted")
     return redirect(url_for('mainui.index'))
 
+
+@mainui.route('/edit/scene/<int:sceneid>',  methods=['GET', 'POST'])
+@mainui.route('/edit/scene/new',  methods=['GET', 'POST'])
+def editScene(sceneid=None):
+
+    if request.method == "POST":
+        channels = map( int, request.form.get('channels', "").split(',') )
+        values = map( int, request.form.get('values', "").split(',') )
+
+        # CLEAN CHANNELS AND VALUES
+
+        category = request.form["category"]
+        name = request.form["name"]
+
+        if sceneid != None:
+            query_db("UPDATE scenes SET sname = ?, scenecategoryid = ? WHERE stid = ?", [name, category, sceneid])
+            query_db("DELETE FROM scene_channels WHERE sceneid = ?", [sceneid])
+        else:
+            query_db("INSERT INTO scenes ('sname', 'scenecategoryid') VALUES (?,?)", [name, category])
+            sceneid = query_db("SELECT sid from scenes where sname = ?", [name])[0]["sid"]
+
+        for i in range(len(channels)):
+            query_db("INSERT INTO scene_channels ('sceneid', 'channelid', 'percent') VALUES (?,?,?)", [sceneid, channels[i], values[i]])
+
+        flash("Scene Saved")
+        return redirect(url_for("mainui.index"))
+
+    categories = query_db("SELECT * FROM categories")
+    channels = query_db("SELECT * FROM channel_with_category ORDER BY cnumber")
+    if(sceneid != None):
+        scene = query_db("SELECT * FROM scenes WHERE sid = ?", [sceneid])[0]
+        name = scene["sname"]
+        schannels = query_db("SELECT * FROM scene_channels_full WHERE sceneid = ? ORDER BY cnumber", [sceneid])
+        # run though channels and place s channel values there
+        n = 0
+        for i in range(len(schannels)):
+            schan = schannels[i]
+            noMatch = True
+            while noMatch:
+
+                if schan["cnumber"] == channels[n]["cnumber"]:
+                    channels[n]["percent"] = schan["percent"]
+                    noMatch = False
+                n = n + 1
+
+        return render_template("editscene.html", sceneid=sceneid, name=name, channels=channels, categories=categories)
+
+    return render_template("editscene.html", sceneid=sceneid, categories=categories, channels=channels)
+
+
+@mainui.route('/delete/scene/<int:sceneid>')
+def deleteScene(sceneid):
+    query_db("DELETE FROM scenes WHERE sid = ?", [sceneid])
+    flash("Scene Deleted")
+    return redirect(url_for('mainui.index'))
+
+
+@mainui.route('/edit/stack/<int:stackid>',  methods=['GET', 'POST'])
+@mainui.route('/edit/stack/new',  methods=['GET', 'POST'])
+def editStack(stackid=None):
+
+    if request.method == "POST":
+        scenes = map( int, request.form.get('scenes', "").split(',') )
+        values = map( int, request.form.get('values', "").split(',') )
+        print(request.form.get('beatlist', "") + "death")
+        beats = map( int, request.form.get('beatlist', "").split(',') )
+
+        category = request.form["category"]
+        name = request.form["name"]
+
+        if stackid != None:
+            query_db("UPDATE stacks SET stname = ?, stackcategoryid = ? WHERE stid = ?", [name, category, stackid])
+            query_db("DELETE FROM stack_scenes WHERE stackid = ?", [stackid])
+        else:
+            query_db("INSERT INTO stacks ('stname', 'stackcategoryid') VALUES (?,?)", [name, category])
+            stackid = query_db("SELECT stid from stacks where stname = ?", [name])[0]["stid"]
+
+        for i in range(len(scenes)):
+            query_db("INSERT INTO stack_scenes ('stackid', 'sceneid', 'beats', 'stackorder', 'percent') VALUES (?,?,?,?,?)", [stackid, scenes[i], beats[i], i, values[i]])
+
+        flash("Stack Saved")
+        return redirect(url_for("mainui.index"))
+
+    categories = query_db("SELECT * FROM categories")
+    scenes = query_db("SELECT * FROM scene_with_category")
+    if(stackid != None):
+        stack = query_db("SELECT * FROM stacks WHERE stid = ?", [stackid])[0]
+        name = stack["stname"]
+        stscenes = query_db("SELECT * FROM stack_scenes_full WHERE stackid = ?", [stackid])
+        return render_template("editstack.html", stackid=stackid, name=name, stscenes=stscenes, scenes=scenes, categories=categories)
+
+    return render_template("editstack.html", stackid=stackid, categories=categories, scenes=scenes)
+
+
+@mainui.route('/delete/stack/<int:stackid>')
+def deleteStack(stackid):
+    # Everything is set up to delete via the foriegn keys
+    query_db("DELETE FROM stacks WHERE stid = ?", [stackid])
+    flash("Stack Deleted")
+    return redirect(url_for('mainui.index'))
+
 # Database shisazt
 def connect_db():
     return sqlite3.connect(mainui.config['DATABASE'])
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 @mainui.before_request
 def before_request():
     g.db = connect_db()
     g.db.execute("PRAGMA foreign_keys = ON")
-    g.db.row_factory = sqlite3.Row
 
 @mainui.teardown_request
 def teardown_request(exception):
@@ -100,6 +215,7 @@ def teardown_request(exception):
         db.close()
 
 def query_db(query, args=(), one=False):
+    g.db.row_factory = dict_factory
     cur = g.db.execute(query, args)
     rv = cur.fetchall()
     cur.close()

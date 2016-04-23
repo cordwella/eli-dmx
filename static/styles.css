@@ -12,15 +12,16 @@ body{
 section{
     padding: 5px;
 }
-ul.slider-set{
+ul.slider-set, ol.slider-set{
     list-style: none;
+    padding-left:0;
 }
-ul.slider-set li{
+ul.slider-set li, ol.slider-set li{
     list-style: none;
     display: block;
 }
 
-ul.slider-set li h4{
+ul.slider-set li h4, ol.slider-set li h4{
     display: block;
     float: left;
 }
@@ -73,4 +74,23 @@ p.input-title{
 
 form{
     margin: 15px;
+}
+
+#hidden-text{
+    display: hidden;
+}
+
+.button{
+    clear: both;
+    float: center;
+    display: block;
+    width: fill;
+    color: black;
+    text-align: center;
+}
+
+.js-remove{
+    float: right;
+    color: red;
+    font-size: 1.5em;
 }

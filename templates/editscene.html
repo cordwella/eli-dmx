@@ -1,0 +1,94 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<form action="{{url_for('mainui.editScene', sceneid=sceneid)}}" method="post" id="mainForm">
+    <div class="input-group">
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Name</p></span>
+        <input type="text" class="form-control" id="name" name="name" placeholder="Scene Name"
+        {% if name %}
+            value="{{ name }}"
+        {% endif %}
+         aria-describedby="basic-addon2" required>
+    </div>
+    <br>
+    <div class="input-group">
+        <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title > Category </p> </span>
+        <select class="form-control" id="category" name="category"
+        {% if catid %}
+            value="{{catid}}"
+        {% endif %}
+        >
+            {% for category in categories %}
+                <option value="{{ category.id }}"> {{ category.category }} </option>
+            {% endfor %}
+        </select>
+    </div>
+    <br>
+
+    <!-- list of channels if > 0 place into scene_channels table -->
+    <ul class="slider-set list-group"  id="channelist">
+        {% for channel in channels %}
+            <li class="list-group-item" id="{{ channel.cid }}">
+                <h4>{{ channel.cname }}
+                    {% if channel.category %}
+                        <span class="category label label-primary">{{ channel.category }}</span>
+                    {% endif %}
+                </h4>
+                <span class="chanid label label-info"> {{ channel.cnumber }} </span>
+                <input id="chan-{{channel.cid}}" type="range"
+                {% if channel.percent %}
+                    value="{{channel.percent}}"
+                {% else %}
+                    value="0"
+                {% endif %}
+                 min="0" max="100" oninput="sendChannel( '{{ channel.cid }}', this.value )">
+            </li>
+        {% else %}
+          <li><em>No channels.</em>
+        {% endfor %}
+    </ul>
+    <script src="{{ url_for('static', filename='jquery-2.2.3.min.js')}}"></script>
+
+    <script>
+    httpGetAsync("/api/all/0");
+
+    function sendChannel(sceneid, value) {
+        value = Math.round(value*255/100);
+        //var value = 0;
+        url = "/api/scene/"+sceneid+"/value/"+value;
+        httpGetAsync(url);
+    }
+
+    // Code to send scenes while this is going on
+    function httpGetAsync(theUrl)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous
+        xmlHttp.send(null);
+    }
+
+    // Code to get the correct output for the scene
+    $("#mainForm").submit( function(eventObj) {
+        // Figure out a way of sending the data as a string possibly json
+        // and then append it to this
+        var channels = [];
+        var values = [];
+        $("ul#channelist li").each(function() {
+            // Get range value and push
+            value = $(this).find("[type=range]").val();
+            if (value > 0){
+                channels.push($(this).attr('id'));
+                values.push(value);
+            }
+        });
+        channels = channels.join();
+        values = values.join();
+        $(this).append('<input type="hidden" name="channels" id="channels" value="'+channels+'">');
+        $(this).append('<input type="hidden" name="values" id="values" value="'+values+'">');
+        return true;
+    });
+    </script>
+
+    <input type=submit value=Save>
+</form>
+{% endblock %}
