@@ -10,7 +10,10 @@ app.register_blueprint(api, url_prefix='/api')
 
 
 if __name__ == '__main__':
-    app.run()
+    if(app.config.get('PORT')):
+        app.run(port=app.config.get('PORT'))
+    else:
+        app.run()
 
 def connect_db():
     return sqlite3.connect(app.config['DATABASE'])
