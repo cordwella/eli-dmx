@@ -18,8 +18,6 @@ CREATE TABLE "channels" (
   CONSTRAINT cname_uni UNIQUE ("cname"),
   FOREIGN KEY ("chancategoryid") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE SET NULL
 );
-INSERT INTO "channels" VALUES (1,'Big Left',1,1);
-INSERT INTO "channels" VALUES (2,'Big Right',2,NULL);
 
 CREATE TABLE "scenes" (
   "sid" INTEGER NOT NULL PRIMARY KEY, -- 'scene id db identifier',
@@ -28,9 +26,6 @@ CREATE TABLE "scenes" (
   CONSTRAINT sname_uni UNIQUE ("sname"),
   FOREIGN KEY ("scenecategoryid") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE SET NULL
 );
-INSERT INTO "scenes" VALUES (1,'General Wash',1);
-INSERT INTO "scenes" VALUES (2,'Stage Lights',NULL);
-
 
 CREATE TABLE "scene_channels" (
   "id" INTEGER NOT NULL PRIMARY KEY,
@@ -41,10 +36,6 @@ CREATE TABLE "scene_channels" (
   FOREIGN KEY ("channelid") REFERENCES "channels" ("cid") ON DELETE CASCADE,
   FOREIGN KEY ("sceneid") REFERENCES "scenes" ("sid") ON DELETE CASCADE
 );
-INSERT INTO "scene_channels" VALUES (1,1,1,100);
-INSERT INTO "scene_channels" VALUES (3,2,2,100);
-
-
 
 CREATE TABLE "stacks" (
   "stid" INTEGER NOT NULL PRIMARY KEY, -- 'stack id',
@@ -53,7 +44,6 @@ CREATE TABLE "stacks" (
   CONSTRAINT stname_uni UNIQUE ("stname"),
   FOREIGN KEY ("stackcategoryid") REFERENCES "categories" ("id") ON DELETE SET NULL ON UPDATE SET NULL
 );
-
 
 CREATE TABLE "stack_scenes" (
   "id" INTEGER NOT NULL PRIMARY KEY,
@@ -66,11 +56,6 @@ CREATE TABLE "stack_scenes" (
   FOREIGN KEY ("sceneid") REFERENCES "scenes" ("sid") ON DELETE CASCADE,
   FOREIGN KEY ("stackid") REFERENCES "stacks" ("stid") ON DELETE CASCADE
 );
-
-INSERT INTO "stacks" VALUES (1,'Red and Blue',1);
-
-INSERT INTO "stack_scenes" VALUES (1,1,1,5,0,100);
-INSERT INTO "stack_scenes" VALUES (3,1,2,5,2,100);
 
 -- View Creation
 
