@@ -1,11 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
 <script>
-// gen list of each type in stack, add onchange for each of them
-// on change send msg to the api
-// TODO: add in footer for the bpm and the fadetime each with their own onchange
-
-//alert("Death");
 var fadetime = 0;
 
 
@@ -50,7 +45,6 @@ function sendFade(){
     fadetime = document.getElementById('fadetime-input-range').value;
     httpGetAsync("/api/fade/"+fadetime);
 }
-//sendChannel(1);
 </script>
 
 <section id="channels" class="col-lg-4 col-md-6 col-sm-12">

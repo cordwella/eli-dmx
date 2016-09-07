@@ -1,6 +1,5 @@
 {% extends "layout.html" %}
 {% block body %}
-<!--  -->
 <form action="{{url_for('mainui.editStack', stackid=stackid)}}" method="post" id="mainForm">
     <div class="input-group">
         <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Name</p></span>
@@ -11,7 +10,6 @@
          aria-describedby="basic-addon2" required>
     </div>
     <br>
-    <!-- This here should be categories -->
     <div class="input-group" >
         <span class="input-group-addon input-title" id="basic-addon2"><p class=input-title >Category</p></span>
         <select class="form-control" id="category" name="category"
@@ -86,6 +84,8 @@
     <script src="{{ url_for('static', filename='jquery-2.2.3.min.js')}}"></script>
 
     <script>
+    // TODO: Add blind edit option
+
     httpGetAsync("/api/all/0");
 
     function sendScene(sceneid, value) {
@@ -107,8 +107,6 @@
 
     // Code to get the correct output for the scene
     $("#mainForm").submit( function(eventObj) {
-        // Figure out a way of sending the data as a string possibly json
-        // and then append it to this
         var scenes = [];
         var values = [];
         var beatlist = [];
@@ -165,6 +163,5 @@
 
 	});
     </script>
-    <!-- this one is gonna need a lot of js so that submit button won't submit -->
 </form>
 {% endblock %}

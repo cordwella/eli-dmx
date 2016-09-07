@@ -40,7 +40,6 @@ def addCategory(name):
 
 @mainui.route('/delete/category/<int:catid>')
 def deleteCategory(catid):
-    # Everything is set up to delete via the foriegn keys
     query_db("DELETE FROM categories WHERE id = ?", [catid])
     flash("Category Deleted")
     return redirect(url_for('mainui.index'))
@@ -192,7 +191,7 @@ def deleteStack(stackid):
     flash("Stack Deleted")
     return redirect(url_for('mainui.index'))
 
-# Database shisazt
+# Database Functions
 def connect_db():
     return sqlite3.connect(mainui.config['DATABASE'])
 

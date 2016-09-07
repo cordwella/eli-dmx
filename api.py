@@ -139,7 +139,6 @@ def changeBPM(beats):
 
 
 def doStack(stackdata, stackid, timestamp, applicablelights, currentpos=0, currentbeat=0):
-    # TODO: all of this crap
     stillActive = False
     for i in applicablelights:
         if currentLightTimecodes[i] <= timestamp:
@@ -240,7 +239,6 @@ def sendFrame(tickgoal, diff, timestamp):
     # otherwise do do it again
     tickgoal = tickgoal - 1
     if tickgoal >= 1:
-        #threading.Timer(TICK_INTERVAL/1000, sendFrame, [tickgoal, diff, timestamp]).start()
         # this here will only work if you multiply, and will fail if you divide, why WHO KNOWS
         wait = TICK_INTERVAL * 0.001
         threading.Timer(wait , sendFrame, [tickgoal, diff, timestamp]).start()
@@ -292,5 +290,4 @@ def query_db(query, args=(), one=False):
 
 
 if __name__ == '__main__':
-    #wrapper.Run()
     sendData()
