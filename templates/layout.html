@@ -28,9 +28,9 @@
                 </div>
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li><a href="/edit/channel/new">New Channel</a></li>
-                        <li><a href="/edit/scene/new">New Scene</a></li>
-                        <li><a href="/edit/stack/new">New Stack</a></li>
+                        <li><a href="{{ url_for('mainui.editChannel')}}">New Channel</a></li>
+                        <li><a href="{{ url_for('mainui.editScene')}}">New Scene</a></li>
+                        <li><a href="{{ url_for('mainui.editStack')}}">New Stack</a></li>
                         <li><a href="#" onclick="addCategory()">New Category</a></li>
                     </ul>
                 </div>
@@ -48,7 +48,7 @@
         <script>
             function addCategory(){
                 var catName = prompt("Category name:")
-                if(confirm('Confirm: Create Category '+ catName)){
+                if(catName != null && confirm('Confirm: Create Category '+ catName)){
                     httpGetAsync("/addcat/"+catName)
                     alert("Category has been created")
                     window.location.reload();
