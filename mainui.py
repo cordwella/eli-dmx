@@ -67,7 +67,7 @@ def editChannel(chanid=None):
             try:
                 query_db("UPDATE channels SET 'cname' = ?, 'cnumber' = ?, 'chancategoryid' = ? WHERE cid = ?", [cname, cnumber, catid, cnumber])
             except:
-                flash("Database error, probs not unique values")
+                flash("Database error, make sure that your name and DMX address are unique")
                 categories = query_db("SELECT * FROM categories")
                 return render_template("editchannel.html", cid=chanid, cname=cname, cnumber=cnumber, categories=categories, catid=catid)
 
